@@ -28,7 +28,7 @@ namespace RestApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ProductDbContext>(options => options.UseInMemoryDatabase("Products"));
-
+            services.AddApiVersioning(options => options.ReportApiVersions = true);
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
