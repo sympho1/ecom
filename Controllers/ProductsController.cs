@@ -74,6 +74,22 @@ namespace RestApi.Controllers
                 return ValidationProblem(ex.Message);
             }
         }
+
+        [HttpGet]
+        [Route("{productNumber}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public ActionResult<Product> GetProductByNumber([FromRoute] string productNumber)
+        {
+            var productDb = _context.Products
+                        .FirstOrDefault(
+                            p => p.ProductNumber.Equals(productNumber, 
+                            StringComparison.InvariantCultureIgnoreCase));
+            
+            if (productDb == null) return NotFound();
+
+            return Ok(productDb);
+        }
     }
 
     public class ProductRequest
