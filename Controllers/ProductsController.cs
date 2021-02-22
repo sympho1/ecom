@@ -21,7 +21,7 @@ namespace RestApi.Controllers
         {
             _context = context;
             _logger = logger;
-            
+
             if (_context.Products.Any()) return;
 
             ProductSeed.InitData(context);
@@ -40,6 +40,11 @@ namespace RestApi.Controllers
                 .Department.StartsWith(department, StringComparison.InvariantCultureIgnoreCase));
             }
 
+            if (request.Limit >= 100)
+            {
+                _logger.LogInformation("requete superieure à plus de 100 produits");
+            }
+
             Response.Headers["x-total-count"] = result.Count().ToString();
 
             return Ok(
@@ -47,6 +52,27 @@ namespace RestApi.Controllers
                 .Skip(request.Offset)
                 .Take(request.Limit)
             );
+        }
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public ActionResult<Product> PostProduct([FromBody] Product product)
+        {
+            try
+            {
+                _context.Products.Add(product);
+                _context.SaveChanges();
+
+                return new CreatedResult($"/products/{product.ProductNumber.ToLower()}", product);
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Impossible d'ajouter un produit.");
+
+                return ValidationProblem(ex.Message);
+            }
         }
     }
 
