@@ -5,6 +5,7 @@ using RestApi.DbSeed;
 using RestApi.Models;
 using System;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace RestApi.Controllers
 {
@@ -89,6 +90,88 @@ namespace RestApi.Controllers
             if (productDb == null) return NotFound();
 
             return Ok(productDb);
+        }
+
+
+        [HttpPut]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public ActionResult<Product> PutProduct([FromBody] Product product)
+        {
+            try
+            {
+                var productDb = _context.Products
+                .FirstOrDefault(
+                    p => p.ProductNumber.Equals(product.ProductNumber, StringComparison.InvariantCultureIgnoreCase)
+                );
+
+
+                if (productDb == null) return NotFound();
+
+                productDb.Name = product.Name;
+                productDb.Price = product.Price;
+                productDb.Department = product.Department;
+
+                _context.SaveChanges();
+
+                return Ok(product);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "impossible de mettre à jour le produit.");
+                return ValidationProblem(ex.Message);
+            }
+        }
+
+        [HttpPatch]
+        [Route("{ProductNumber}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public ActionResult<Product> PatchProduct([FromRoute] string ProductNumber, [FromBody] JsonPatchDocument<Product> patch)
+        {
+            try
+            {
+                var productDb = _context.Products
+                .FirstOrDefault(
+                    p => p.ProductNumber.Equals(ProductNumber, StringComparison.InvariantCultureIgnoreCase)
+                );
+
+                if (productDb == null) return NotFound();
+
+                patch.ApplyTo(productDb, ModelState);
+
+                if (!ModelState.IsValid || !TryValidateModel(productDb)) return ValidationProblem(ModelState);
+
+                _context.SaveChanges();
+
+                return Ok(productDb);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "impossible de patccher le produit");
+                return ValidationProblem(ex.Message);
+            }
+        }
+
+        [HttpDelete]
+        [Route("{productNumber}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public ActionResult<Product> DeleteProduct([FromRoute] string productNumber)
+        {
+            var productDb = _context.Products
+            .FirstOrDefault(
+                p => p.ProductNumber.Equals(productNumber, StringComparison.InvariantCultureIgnoreCase)
+            );
+
+            if (productDb == null) return NotFound();
+
+            _context.Products.Remove(productDb);
+            _context.SaveChanges();
+
+            return NoContent();
         }
     }
 

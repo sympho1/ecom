@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using RestApi.Models;
+using Newtonsoft;
 
 namespace RestApi
 {
@@ -29,7 +30,7 @@ namespace RestApi
         {
             services.AddDbContext<ProductDbContext>(options => options.UseInMemoryDatabase("Products"));
             services.AddApiVersioning(options => options.ReportApiVersions = true);
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", 
